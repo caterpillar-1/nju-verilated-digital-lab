@@ -2,7 +2,7 @@
 # copied and modified from nvboard example project
 # wave generation code inspired by rijuyuezhu
 
-VIVADO_PROJ_NAME = lab03
+VIVADO_PROJ_NAME = example00
 TOPNAME = top
 NXDC_FILES = constr/top.nxdc
 INC_PATH ?=
