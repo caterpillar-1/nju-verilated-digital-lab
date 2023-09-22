@@ -4,6 +4,10 @@
 
 本项目还未开发完成。
 
+## 演示
+
+<iframe src="//player.bilibili.com/player.html?bvid=BV1Lk4y1c7j4&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+
 ## 背景
 
 当前，南京大学的数电实验是在 Vivado 上，使用 nexysa7 开发板进行的。然而，Vivado 软件磁盘占用较大，不利于学生在自己的电脑上进行实验~~（不少同学忍痛删除了许多游戏）~~。
