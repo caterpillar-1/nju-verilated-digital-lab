@@ -6,7 +6,7 @@
 
 ## 演示
 
-<iframe src="//player.bilibili.com/player.html?bvid=BV1Lk4y1c7j4&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+[NVDLv0.0.2demo](https://www.bilibili.com/video/BV1Lk4y1c7j4/)
 
 ## 背景
 
