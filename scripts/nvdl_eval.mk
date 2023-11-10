@@ -13,6 +13,15 @@ VSRCS += $(shell find $(abspath $(TOP_DIR)) $(VSRC_PATTERN))
 CFLAGS += $(addprefix -I,$(INCLUDE_PATH)) -DTOP_NAME="\"V$(EVAL_TOP)\""L
 LDFLAGS += $(NVBOARD_ARCHIVE) -lSDL2 -lSDL2_image
 
+# Clock type
+ifeq ($(CLOCK_TYPE),RT)
+	CFLAGS += -DCLK_RT
+	VERILATOR_FLAGS += -DCLK_RT
+else
+	CFLAGS += -DCLK_PERF
+	VERILATOR_FLAGS += -DCLK_PERF
+endif
+
 include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 SRC_AUTOBIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)

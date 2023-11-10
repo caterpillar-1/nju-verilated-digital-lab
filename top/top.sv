@@ -1,5 +1,5 @@
 module top (
-  input CLK,
+  input CLK_INPUT,
   input [15:0] SW,
   input [4:0] BTN,
   output [15:0] LED,
@@ -9,9 +9,30 @@ module top (
     output [7:0] AN,
     output CA, CB, CC, CD, CE, CF, CG, DP,
   `endif
-  input PS2_CLK, PS2_DAT
+  input PS2_CLK, PS2_DAT,
+  output [3:0] VGA_R, VGA_G, VGA_B,
+  `ifdef NVDL
+  output VGA_VALID_N,
+  `endif
+  output VGA_HS, VGA_VS
+
 );
 
+/********************
+*   CLK (10MHz)    *
+********************/
+
+wire CLK; // RT: 10MHz, PERF: maxinum frequency provided by platform
+
+`ifdef CLK_RT
+`ifdef NVDL
+assign CLK = CLK_INPUT;
+`elsif VIVADO
+clkgen #(100000000, 10000000) clk_10khz_gen(.in(CLK_INPUT), .out(CLK));
+`endif
+`elsif CLK_PERF
+assign CLK = CLK_INPUT;
+`endif
 
 /***********************************
 *   SEG_CONTENT, SEG_DP, SEG_EN    *
@@ -74,21 +95,7 @@ end
 
 
 reg clk_1khz;
-reg [19:0] clk_1khz_cache;
-
-initial begin
-    clk_1khz = 0;
-    clk_1khz_cache = 0;
-end
-
-always @(posedge CLK) begin
-    if (clk_1khz_cache == 20'd49999) begin
-        clk_1khz <= ~clk_1khz;
-        clk_1khz_cache <= 0;
-    end else begin
-        clk_1khz_cache <= clk_1khz_cache + 1;
-    end
-end
+clkgen #(100000000, 1000) clk_1khz_gen(.in(CLK_INPUT), .out(clk_1khz));
 
 always @(posedge clk_1khz) begin
     select <= select + 1;
@@ -107,17 +114,146 @@ assign {DP, CG, CF, CE, CD, CC, CB, CA}
 
 `endif
 
+/********************************************
+* VGA_VALID, VGA_DATA, VGA_HADDR, VGA_VADDR *
+********************************************/
+
+
+wire [11:0] VGA_DATA;
+wire [9:0] VGA_HADDR, VGA_VADDR;
+
+vga_ctrl vga_ctrl(
+  .pclk(CLK),
+  .reset(1'b0),
+  .vga_data(VGA_DATA),
+  .h_addr(VGA_HADDR),
+  .v_addr(VGA_VADDR),
+  .hsync(VGA_HS),
+  .vsync(VGA_VS),
+  .valid(VGA_VALID_N),
+  .vga_r(VGA_R),
+  .vga_g(VGA_G),
+  .vga_b(VGA_B)
+);
+
+`ifndef NVDL
+wire VGA_VALID_N;
+`endif
+
 /* USERSPACE BEGIN */
 
-alu alu(
-  .rst(1'b0),
+wire [2:0] fg_color, bg_color, w_fg_color, w_bg_color;
+wire [7:0] ascii, w_ascii;
+wire vga_bit;
+
+wire [4:0] r_addr, wr_addr;
+wire [6:0] c_addr, wc_addr;
+wire [3:0] ir_addr;
+wire [3:0] ic_addr;
+
+assign r_addr = VGA_VADDR[8:4];
+assign c_addr = VGA_HADDR / 9;
+assign ir_addr = VGA_VADDR[3:0];
+assign ic_addr = VGA_HADDR % 9;
+
+wire cmem_we;
+
+vga_render vga_render(
+  .fg_color(fg_color),
+  .bg_color(bg_color),
+  .vga_bit(vga_bit),
+  .vga_data(VGA_DATA)
+);
+
+vga_cmem vga_cmem(
   .clk(CLK),
-  .op_in(SW[1:0]),
-  .a_in(SW[7:4]),
-  .b_in(SW[11:8]),
-  .in_valid(SW[2]),
-  .out(LED[3:0]),
-  .out_valid(LED[15])
+  .r_addr(r_addr),
+  .c_addr(c_addr),
+  .ascii(ascii),
+  .fg_color(fg_color),
+  .bg_color(bg_color),
+  .we(cmem_we),
+  .wr_addr(wr_addr),
+  .wc_addr(wc_addr),
+  .w_ascii(w_ascii),
+  .w_fg_color(w_fg_color),
+  .w_bg_color(w_bg_color)
+);
+
+vga_bitmap vga_bitmap(
+  .ascii(ascii),
+  .ir_addr(ir_addr),
+  .ic_addr(ic_addr),
+  .vga_bit(vga_bit)
+);
+
+wire valid;
+wire [7:0] in_ascii;
+
+terminal terminal(
+  .clk(CLK),
+  .we(cmem_we),
+  .wr_addr(wr_addr),
+  .wc_addr(wc_addr),
+  .fg_color(w_fg_color),
+  .bg_color(w_bg_color),
+  .w_ascii(w_ascii),
+  .in_valid(valid),
+  .in_ascii(in_ascii)
+);
+
+wire ready, next, overflow;
+wire [7:0] data;
+wire set_rst;
+wire ctrl, alt, shift, caps;
+wire [7:0] key;
+
+ps2_keyboard ps2_keyboard(
+    .clk(CLK),
+    .rst(set_rst),
+    .ps2_clk(PS2_CLK),
+    .ps2_data(PS2_DAT),
+    .next(next),
+    .ready(ready),
+    .overflow(overflow),
+    .data(data)
+);
+
+keyboard keyboard(
+    .clk(CLK),
+    .rst(BTN[4]),
+    .ready(ready),
+    .overflow(overflow),
+    .data(data),
+    .set_rst(set_rst),
+    .set_next(next),
+    .ctrl(ctrl),
+    .alt(alt),
+    .shift(shift),
+    .caps(caps),
+    .key(key)
+);
+
+keycode_to_ascii conventer(
+    .keycode(key),
+    .shift(shift | caps),
+    .valid(valid),
+    .ascii(in_ascii)
+);
+
+wire clock_clk;
+clkgen #(10000000, 1000) clock_clk_gen(.in(CLK_INPUT), .out(clock_clk));
+
+// Related modules were written when I was a freshman to Verilog
+// and are used for demonstration purpose only.
+digital_clock digital_clock(
+  .clk(clock_clk),
+  .sw(SW),
+  .btn(BTN),
+  .seg_content(SEG_CONTENT),
+  .seg_dp(SEG_DP),
+  .seg_en(SEG_EN),
+  .led(LED)
 );
 
 /* USERSPACE END */

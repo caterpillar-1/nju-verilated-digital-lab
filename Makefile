@@ -1,5 +1,6 @@
 # Main Makefile
 # When calling make, please provide PLATFORM = {NVDL, VIVADO}, MODE = {SIM, EVAL}
+
 # Used for NVDL, verilog dut. There should be exact one main() in $(TESTS_DIR)/$(TEST_NAME).
 SIM_TOP = alu
 # Used for VIVADO, verilog testbench name
@@ -8,6 +9,11 @@ SIM_TB = alu_test
 TEST_NAME = alu_test00
 # The unified top_module for evaluation on board.
 EVAL_TOP = top
+# Type of clk. RT: provide CLK (10KHz), PERF: provide the fastest avaliable clk.
+CLOCK_TYPE = RT
+
+
+
 # the design verilog files
 VSRCS_DIR = ./vsrc
 # C++ classes used to design testbenches
@@ -44,10 +50,10 @@ ifeq ($(PLATFORM), NVDL)
 		include $(SCRIPTS_DIR)/nvdl_eval.mk
 	endif
 else
-	ifeq ($(MODE), SIM)
-		include $(SCRIPTS_DIR)/vivado_sim.mk
-	else
+	ifeq ($(MODE), EVAL)
 		include $(SCRIPTS_DIR)/vivado_eval.mk
+	else
+		include $(SCRIPTS_DIR)/vivado_sim.mk
 	endif
 endif
 
