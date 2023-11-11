@@ -1,6 +1,8 @@
 # Main Makefile
 # When calling make, please provide PLATFORM = {NVDL, VIVADO}, MODE = {SIM, EVAL}
 
+# Project type, PROJ_TYPE = {VERILOG, CHISEL}
+PROJ_TYPE = VERILOG
 # Used for NVDL, verilog dut. There should be exact one main() in $(TESTS_DIR)/$(TEST_NAME).
 SIM_TOP = alu
 # Used for VIVADO, verilog testbench name
@@ -32,32 +34,61 @@ SCRIPTS_DIR = ./scripts
 
 # the build directory
 BUILD_DIR = ./build
+ifeq ($(PROJ_TYPE),CHISEL)
+# generated verilog source for chisel modules
+VSRC_GEN_DIR = ./vsrc_gen
+endif
+
+export PATH := $(PATH):$(abspath ./utils)
 
 $(shell mkdir -p $(BUILD_DIR))
 
 VSRC_PATTERN = -name "*.v" -or -name "*.sv"
 CSRC_PATTERN = -name "*.c" -or -name "*.cc" -or -name "*.cpp"
 
-VSRCS += $(shell find $(abspath $(VSRCS_DIR)) $(VSRC_PATTERN)) 
+VSRCS += $(shell find $(abspath $(VSRCS_DIR)) $(VSRC_PATTERN))
+ifeq ($(PROJ_TYPE),CHISEL)
+VSRCS += $(shell find $(abspath $(VSRC_GEN_DIR)) $(VSRC_PATTERN)) 
+endif
 CSRCS += $(shell find $(abspath $(CSRCS_DIR)) $(CSRC_PATTERN))
 NXDC_FILE = $(CONSTR_DIR)/$(EVAL_TOP).nxdc
 INCLUDE_PATH = $(INCLUDE_DIR)
 
 ifeq ($(PLATFORM), NVDL)
-	ifeq ($(MODE), SIM)
-		include $(SCRIPTS_DIR)/nvdl_sim.mk
-	else 
-		include $(SCRIPTS_DIR)/nvdl_eval.mk
-	endif
+ifeq ($(MODE), SIM)
+	include $(SCRIPTS_DIR)/nvdl_sim.mk
+else 
+	include $(SCRIPTS_DIR)/nvdl_eval.mk
+endif
 else
-	ifeq ($(MODE), EVAL)
-		include $(SCRIPTS_DIR)/vivado_eval.mk
-	else
-		include $(SCRIPTS_DIR)/vivado_sim.mk
-	endif
+ifeq ($(MODE), EVAL)
+	include $(SCRIPTS_DIR)/vivado_eval.mk
+else
+	include $(SCRIPTS_DIR)/vivado_sim.mk
+endif
 endif
 
-.PHONY: clean
+ifeq ($(PROJ_TYPE),CHISEL)
+test:
+	mill -i __.test
+
+verilog:
+	mkdir -p $(VSRC_GEN_DIR)
+	mill -i __.test.runMain Elaborate -td $(VSRC_GEN_DIR)
+
+bsp:
+	mill -i mill.bsp.BSP/install
+
+reformat:
+	mill -i __.reformat
+
+checkformat:
+	mill -i __.checkFormat
+endif
+
 clean:
 	@echo "### CLEAN ###"
-	rm -rf $(BUILD_DIR)
+	-rm -rf $(VSRC_GEN_DIR) $(BUILD_DIR)
+
+.PHONY: test verilog bsp reformat checkformat clean
+
