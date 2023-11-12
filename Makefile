@@ -1,5 +1,7 @@
 # Main Makefile
 # When calling make, please provide PLATFORM = {NVDL, VIVADO}, MODE = {SIM, EVAL}
+NVDL_HOME = ${HOME}/.local/opt/nvdl
+$(shell mkdir -p $(NVDL_HOME))
 
 # Project type, PROJ_TYPE = {VERILOG, CHISEL}
 PROJ_TYPE = VERILOG
@@ -89,6 +91,14 @@ endif
 clean:
 	@echo "### CLEAN ###"
 	-rm -rf $(VSRC_GEN_DIR) $(BUILD_DIR)
+
+nvdl_install:
+	@echo "Welcome to nju-verilated-digital-lab!"
+	@echo "Installing NVboard."
+	PREFIX=$(NVDL_HOME) bash scripts/install.sh nvboard
+	@echo "Installing Verilator."
+	PREFIX=$(NVDL_HOME) bash scripts/install.sh verilator
+	@echo "Done."
 
 .PHONY: test verilog bsp reformat checkformat clean
 
