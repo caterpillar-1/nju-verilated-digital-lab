@@ -2,6 +2,8 @@
 
 ## 说明
 
+本 README 还没有为 v0.1.0 版本更新
+
 本项目还未开发完成。
 
 ## 演示
@@ -10,7 +12,7 @@
 
 ## 背景
 
-当前，南京大学的数电实验是在 Vivado 上，使用 nexysa7 开发板进行的。然而，Vivado 软件磁盘占用较大，不利于学生在自己的电脑上进行实验~~（不少同学忍痛删除了许多游戏）~~。
+当前，南京大学的数电实验是在 Vivado 上，使用 nexysa7 开发板进行的。然而，Vivado 软件磁盘占用较大，不利于学生在自己的电脑上进行实验。
 
 [NJU-ProjectN](https://github.com/NJU-ProjectN) 项目的子项目 [nvboard](https://github.com/NJU-ProjectN/nvboard) 提供了一个虚拟的开发板。
 
@@ -30,9 +32,9 @@
 
 1. [x] 支持用 verilator 编译 Vivado 创建的项目；
 2. [x] 支持用 nvboard 验证设计；
-3. [ ] 支持自动追踪，使 verilator 编译的二进制文件自动输出波形；
-4. [ ] 支持自动打开 gtkwave 查看波形；
-5. [ ] 支持自动安装配置 verilator / nvboard / gtkwave (on GNU/Linux)；
+3. [x] 支持自动追踪，使 verilator 编译的二进制文件自动输出波形；
+4. [x] 支持自动打开 gtkwave 查看波形；
+5. [x] 支持自动安装配置 verilator / nvboard / gtkwave (on GNU/Linux)；
 6. [ ] 自动安装的跨平台支持；
 
 ## 使用

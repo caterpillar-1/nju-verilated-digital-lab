@@ -1,6 +1,7 @@
 # Behavioral simulation on Vivado
 
 include scripts/vivado.mk
+.DEFAULT_GOAL = simulate
 
 WAVE = $(TEST_NAME)_snapshot.wdb
 SNAPSHOT = $(TEST_NAME)_snapshot

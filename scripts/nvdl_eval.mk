@@ -2,6 +2,7 @@
 # Evaluate on NVDL using nvboard
 
 include scripts/nvdl.mk
+.DEFAULT_GOAL=nvboard
 
 BIN = V$(EVAL_TOP)_eval
 INCLUDE_PATH += $(NVBOARD_HOME)/include

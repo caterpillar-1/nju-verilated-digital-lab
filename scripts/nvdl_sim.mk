@@ -5,7 +5,7 @@ include scripts/nvdl.mk
 
 BIN = V$(SIM_TOP)_sim
 WAVE = $(BUILD_DIR)/$(SIM_TOP).vcd
-.DEFAULT_GOAL := sim
+.DEFAULT_GOAL = sim
 
 VERILATOR_FLAGS += -DSIM --trace --top $(SIM_TOP)
 CSRCS += $(shell find $(abspath $(TEST_DIR)) $(CSRC_PATTERN))
